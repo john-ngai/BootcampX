@@ -9,19 +9,20 @@ const pool = new Pool({
   database: 'bootcampx'
 });
 
-// Node.js inputs
-const inputs = process.argv.slice(2);
-const cohort = inputs[0];
-const limit = inputs[1];
-
-// pool.query is a function that accepts an SQL query as a JavaScript string.
-pool.query(`
-SELECT students.id, students.name, cohorts.name AS cohort
+// Query parameters.
+const queryString = `
+SELECT students.id as student_id, students.name as name, cohorts.name as cohort
 FROM students
 JOIN cohorts ON cohorts.id = cohort_id
-WHERE cohorts.name LIKE '${cohort}%'
-LIMIT ${limit || 5};
-`)
+WHERE cohorts.name LIKE $1
+LIMIT $2;
+`;
+const cohort = process.argv[2];
+const limit = process.argv[3] || 5;
+const values = [`%${cohort}%`, limit];
+
+// pool.query is a function that accepts an SQL query as a JavaScript string.
+pool.query(queryString, values)
 .then(res => {
   const data = res.rows;
   data.forEach(user => {
@@ -32,3 +33,5 @@ LIMIT ${limit || 5};
   });
 })
 .catch(err => console.error('query error', err.stack));
+
+// e.g. Run 'node students.js FEB 2'
